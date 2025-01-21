@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         std::string blob_path {obj_dir + "/" + file_dir + "/" + file_name};
 
         //Decompress
-        std::cout << "Reading from " << blob_path << '\n';
+        std::cerr << "Reading from " << blob_path << '\n';
         std::vector<char> decompressed = decompress_file(blob_path);
         auto it {std::find(decompressed.begin(), decompressed.end(), '\0') + 1};
         auto content_start {std::distance(decompressed.begin(), it)};
