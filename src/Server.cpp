@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
         std::vector<char> decompressed = decompress_file(blob_path);
         auto it {std::find(decompressed.begin(), decompressed.end(), '\0') + 1};
         auto content_start {std::distance(decompressed.begin(), it)};
-        std::cout.write(decompressed.data() + content_start, decompressed.size());
+        std::cout.write(decompressed.data() + content_start, decompressed.size() - content_start);
     } 
     else 
     {
