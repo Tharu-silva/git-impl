@@ -4,6 +4,7 @@
 #include <string>
 #include <zlib.h>
 #include <vector>
+#include <algorithm>
 
 #define BUFF_SIZE 1024
 
@@ -94,7 +95,9 @@ int main(int argc, char *argv[])
         //Decompress
         std::cout << "Reading from " << blob_path << '\n';
         std::vector<char> decompressed = decompress_file(blob_path);
-        std::cout.write(decompressed.data(), decompressed.size());
+        auto it {std::find(decompressed.begin(), decompressed.end(), '\0') + 1};
+        auto content_start {std::distance(decompressed.begin(), it)};
+        std::cout.write(decompressed.data() + content_start, decompressed.size());
     } 
     else 
     {
