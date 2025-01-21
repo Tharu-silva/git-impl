@@ -8,7 +8,8 @@
 
 #define BUFF_SIZE 1024
 
-std::vector<char> decompress_file(const std::string& filename) {
+std::vector<char> decompress_file(const std::string& filename) 
+{
     std::ifstream file(filename, std::ios::binary);
     std::vector<char> compressed_data(
         (std::istreambuf_iterator<char>(file)),
@@ -28,7 +29,8 @@ std::vector<char> decompress_file(const std::string& filename) {
     );
     
     if (result != Z_OK) {
-        throw std::runtime_error("Decompression failed");
+        std::cerr << "Decompression failed\n";
+        exit(EXIT_FAILURE);
     }
     
     // Resize to actual decompressed size
