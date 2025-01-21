@@ -2,10 +2,38 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include "zstr.hpp"
-
+#include <zlib.h>
+#include <vector>
 
 #define BUFF_SIZE 1024
+
+std::vector<char> decompress_file(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    std::vector<char> compressed_data(
+        (std::istreambuf_iterator<char>(file)),
+        std::istreambuf_iterator<char>()
+    );
+    
+    // Prepare output buffer
+    std::vector<char> decompressed_data(compressed_data.size() * 4); // Initialize with larger size
+    uLongf decompressed_size = decompressed_data.size();
+    
+    // Decompress
+    int result = uncompress(
+        (Bytef*)decompressed_data.data(),
+        &decompressed_size,
+        (Bytef*)compressed_data.data(),
+        compressed_data.size()
+    );
+    
+    if (result != Z_OK) {
+        throw std::runtime_error("Decompression failed");
+    }
+    
+    // Resize to actual decompressed size
+    decompressed_data.resize(decompressed_size);
+    return decompressed_data;
+}
 
 
 int main(int argc, char *argv[])
@@ -65,18 +93,8 @@ int main(int argc, char *argv[])
 
         //Decompress
         std::cout << "Reading from " << blob_path << '\n';
-
-        zstr::ifstream input (path, std::ofstream::binary);
-        if (!input.is_open())
-        {
-            std::cerr << "Failed to open object file\n";
-            return EXIT_FAILURE;
-        }
-        std::string object_str{std::istreambuf_iterator<char>(input),
-                               std::istreambuf_iterator<char>()};
-        input.close();
-        const auto object_content = object_str.substr(object_str.find('\0') + 1);
-        std::cout << object_content << std::flush;
+        std::vector<char> decompressed = decompress_file(blob_path);
+        std::cout.write(decompressed.data(), decompressed.size());
     } 
     else 
     {
