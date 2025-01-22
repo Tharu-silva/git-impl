@@ -8,5 +8,4 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 
 add_executable(git ${SOURCE_FILES})
 
-
-target_link_libraries(git -lz)
+target_link_libraries(git -lz -lssl -lcrypto)

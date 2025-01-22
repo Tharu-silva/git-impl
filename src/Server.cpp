@@ -5,10 +5,12 @@
 #include <zlib.h>
 #include <vector>
 #include <algorithm>
+#include <memory>
+#include <cstring>
 
 #define BUFF_SIZE 1024
 
-std::vector<char> decompress_file(const std::string& filename) 
+std::unique_ptr<std::vector<char>> decompress_file(const std::string& filename) 
 {
     std::ifstream file(filename, std::ios::binary);
     std::vector<char> compressed_data(
@@ -17,12 +19,12 @@ std::vector<char> decompress_file(const std::string& filename)
     );
     
     // Prepare output buffer
-    std::vector<char> decompressed_data(compressed_data.size() * 4); // Initialize with larger size
-    uLongf decompressed_size = decompressed_data.size();
+    std::unique_ptr<std::vector<char>> decompressed_data {std::make_unique<std::vector<char>>(compressed_data.size() * 4 )};
+    uLongf decompressed_size = decompressed_data->size();
     
     // Decompress
     int result = uncompress(
-        (Bytef*)decompressed_data.data(),
+        (Bytef*)decompressed_data->data(),
         &decompressed_size,
         (Bytef*)compressed_data.data(),
         compressed_data.size()
@@ -34,7 +36,7 @@ std::vector<char> decompress_file(const std::string& filename)
     }
     
     // Resize to actual decompressed size
-    decompressed_data.resize(decompressed_size);
+    decompressed_data->resize(decompressed_size);
     return decompressed_data;
 }
 
@@ -74,7 +76,7 @@ int main(int argc, char *argv[])
         }
     } else if (command == "cat-file")
     {
-        if (argc <= 3)
+        if (argc < 4)
         {
             std::cerr << "Invalid arguments, arguments required cat-file -p <blob_sha1>\n";
             return EXIT_FAILURE;
@@ -95,12 +97,32 @@ int main(int argc, char *argv[])
         std::string blob_path {obj_dir + "/" + file_dir + "/" + file_name};
 
         //Decompress
-        std::cerr << "Reading from " << blob_path << '\n';
-        std::vector<char> decompressed = decompress_file(blob_path);
-        auto it {std::find(decompressed.begin(), decompressed.end(), '\0') + 1};
-        auto content_start {std::distance(decompressed.begin(), it)};
-        std::cout.write(decompressed.data() + content_start, decompressed.size() - content_start);
-    } 
+        std::cerr << "Reading " << blob_path << '\n';
+        std::unique_ptr<std::vector<char>> decompressed = decompress_file(blob_path);
+        auto it {std::find(decompressed->begin(), decompressed->end(), '\0') + 1};
+        auto content_start {std::distance(decompressed->begin(), it)};
+        std::cout.write(decompressed->data() + content_start, decompressed->size() - content_start);
+
+    } else if (command == "hash-object")
+    {
+        if (argc < 4)
+        {
+            std::cerr << "Invalid arguments, arguments required cat-file -p <blob_sha1>\n";
+            return EXIT_FAILURE;
+        } 
+
+        if (strncmp(argv[2], "-w", 2) == 1)
+        {
+            std::cerr << "Invalid flag, expected `-w`";
+            return EXIT_FAILURE; 
+        }
+
+        const std::string file {argv[3]};
+
+        //Hash file
+    
+
+    }
     else 
     {
         std::cerr << "Unknown command " << command << '\n';
